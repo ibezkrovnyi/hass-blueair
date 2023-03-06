@@ -47,7 +47,6 @@ class BlueairLight(BlueairEntity, LightEntity):
 
     @property
     def supported_features(self) -> int:
-        # If the fan_mode property is supported, enable support for presets
         if self._device.brightness_supported:
             return SUPPORT_BRIGHTNESS 
         return 0
@@ -60,13 +59,10 @@ class BlueairLight(BlueairEntity, LightEntity):
 
     @property
     def brightness(self) -> Optional[int]:
-        """Return the current backlight brightness."""
         return self._device.brightness
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn on or control the light."""
         await self._device.set_brightness(kwargs.get(ATTR_BRIGHTNESS, 255))
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn off or control the light."""
         await self._device.set_brightness(kwargs.get(ATTR_BRIGHTNESS, 0))

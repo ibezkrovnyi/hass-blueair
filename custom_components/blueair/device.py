@@ -228,6 +228,7 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def set_child_lock(self, child_lock: bool) -> None:
         device_child_lock = str(int(child_lock))
+        LOGGER.info(f"igor1: child_lock={child_lock}, device_child_lock={device_child_lock}")
         await self.hass.async_add_executor_job(
             lambda: self.api_client.set_attribute(self._uuid, ConfigAttribute.CHILD_LOCK, device_child_lock)
         )
