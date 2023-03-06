@@ -165,45 +165,22 @@ class BlueAir(object):
         """
         return self.api_call(f"device/{device_uuid}/info/")
 
-    def set_fan_speed(self, device_uuid, new_speed):
+    def set_attribute(self, device_uuid: str, attribute: str, value: str):
         """
-        Set the fan speed per @spikeyGG comment at https://community.home-assistant.io/t/blueair-purifier-addon/154456/14
+        Set the attribute value
         """
         res = requests.post(
-            f"https://{self.home_host}/v2/device/{device_uuid}/attribute/fanspeed/",
+            f"https://{self.home_host}/v2/device/{device_uuid}/attribute/{attribute}/",
             headers={
                 "Content-Type": "application/json",
                 "X-API-KEY-TOKEN": API_KEY,
                 "X-AUTH-TOKEN": self.auth_token,
             },
             json={
-                "currentValue": new_speed,
+                "currentValue": value,
                 "scope": "device",
-                "defaultValue": new_speed,
-                "name": "fan_speed",
-                "uuid": device_uuid,
-            },
-        )
-
-    def set_fan_mode(self, device_uuid, new_mode):
-        """
-        Set the fan mode to automatic
-        """
-        if new_mode == None:
-            new_mode="manual"
-
-        res = requests.post(
-            f"https://{self.home_host}/v2/device/{device_uuid}/attribute/mode/",
-            headers={
-                "Content-Type": "application/json",
-                "X-API-KEY-TOKEN": API_KEY,
-                "X-AUTH-TOKEN": self.auth_token,
-            },
-            json={
-                "currentValue": new_mode,
-                "scope": "device",
-                "defaultValue": new_mode,
-                "name": "mode",
+                "defaultValue": value,
+                "name": attribute,
                 "uuid": device_uuid,
             },
         )

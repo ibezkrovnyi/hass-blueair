@@ -4,17 +4,35 @@ from datetime import datetime, timedelta
 from typing import Any
 from async_timeout import timeout
 
-
 from . import blueair
 
 API = blueair.BlueAir
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.backports.enum import StrEnum
 import homeassistant.util.dt as dt_util
 
 from .const import DOMAIN, LOGGER
 
+class ConfigAttribute(StrEnum):
+    """Possible blueair configuration attributes."""
+    CHILD_LOCK = "child_lock"
+    BRIGHTNESS = "brightness"
+    FAN_MODE = "mode"
+    FAN_SPEED = "fan_speed"
+    FILTER_STATUS = "filter_status"
+
+class DatapointAttribute(StrEnum):
+    """Possible blueair datapoint attributes."""
+    ALL_POLLUTION = "all_pollution"
+    TEMPERATURE = "temperature"
+    HUMIDITY = "humidity"
+    CO2 = "co2"
+    VOC = "voc"
+    PM1 = "pm1"
+    PM25 = "pm25"
+    PM10 = "pm10"
 
 class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
     """Blueair device object."""
@@ -70,109 +88,154 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
     @property
     def temperature(self) -> float:
         """Return the current temperature in degrees C."""
-        if "temperature" not in self._datapoint:
+        if DatapointAttribute.TEMPERATURE not in self._datapoint:
             return None
-        return self._datapoint["temperature"]
+        return self._datapoint[DatapointAttribute.TEMPERATURE]
 
     @property
     def humidity(self) -> float:
         """Return the current relative humidity percentage."""
-        if "humidity" not in self._datapoint:
+        if DatapointAttribute.HUMIDITY not in self._datapoint:
             return None
-        return self._datapoint["humidity"]
+        return self._datapoint[DatapointAttribute.HUMIDITY]
 
     @property
     def co2(self) -> float:
         """Return the current co2."""
-        if "co2" not in self._datapoint:
+        if DatapointAttribute.CO2 not in self._datapoint:
             return None
-        return self._datapoint["co2"]
+        return self._datapoint[DatapointAttribute.CO2]
 
     @property
     def voc(self) -> float:
         """Return the current voc."""
-        if "voc" not in self._datapoint:
+        if DatapointAttribute.VOC not in self._datapoint:
             return None
-        return self._datapoint["voc"]
+        return self._datapoint[DatapointAttribute.VOC]
 
     @property
     def pm1(self) -> float:
         """Return the current pm1."""
-        if "pm1" not in self._datapoint:
+        if DatapointAttribute.PM1 not in self._datapoint:
             return None
-        return self._datapoint["pm1"]
+        return self._datapoint[DatapointAttribute.PM1]
 
     @property
     def pm10(self) -> float:
         """Return the current pm10."""
-        if "pm10" not in self._datapoint:
+        if DatapointAttribute.PM10 not in self._datapoint:
             return None
-        return self._datapoint["pm10"]
+        return self._datapoint[DatapointAttribute.PM10]
 
     @property
     def pm25(self) -> float:
         """Return the current pm25."""
-        if "pm25" not in self._datapoint:
+        if DatapointAttribute.PM25 not in self._datapoint:
             return None
-        return self._datapoint["pm25"]
+        return self._datapoint[DatapointAttribute.PM25]
 
     @property
     def all_pollution(self) -> float:
         """Return all pollution"""
-        if "all_pollution" not in self._datapoint:
+        if DatapointAttribute.ALL_POLLUTION not in self._datapoint:
             return None
-        return self._datapoint["all_pollution"]
+        return self._datapoint[DatapointAttribute.ALL_POLLUTION]
 
     @property
     def fan_speed(self) -> int:
         """Return the current fan speed."""
-        if "fan_speed" not in self._attribute:
+        if ConfigAttribute.FAN_SPEED not in self._attribute:
             return None
-        return int(self._attribute["fan_speed"])
+        return int(self._attribute[ConfigAttribute.FAN_SPEED])
 
     @property
     def is_on(self) -> bool():
         """Return the current fan state."""
-        if "fan_speed" not in self._attribute:
+        if ConfigAttribute.FAN_SPEED not in self._attribute:
             return None
-        if self._attribute["fan_speed"] == "0":
+        if self._attribute[ConfigAttribute.FAN_SPEED] == "0":
             return False
         return True
 
     @property
     def fan_mode(self) -> str:
         """Return the current fan mode"""
-        if self._attribute["mode"] == "manual":
+        if self._attribute[ConfigAttribute.FAN_MODE] == "manual":
             return None
-        return self._attribute["mode"]
+        return self._attribute[ConfigAttribute.FAN_MODE]
 
     @property
     def fan_mode_supported(self) -> bool():
         """Return if fan mode is supported. This function is used to lock out unsupported
          functionality from the UI if the model doesnt support modes"""
-        if "mode" in self._attribute:
+        if ConfigAttribute.FAN_MODE in self._attribute:
+            return True
+        return False
+
+    @property
+    def brightness(self) -> int:
+        """Return current backlight brightness"""
+        if ConfigAttribute.BRIGHTNESS not in self._attribute:
+            return None
+        return int(self._attribute[ConfigAttribute.BRIGHTNESS])
+
+    @property
+    def brightness_supported(self) -> bool():
+        """Return if brightness is supported. This function is used to lock out unsupported
+         functionality from the UI if the model doesnt support modes"""
+        if ConfigAttribute.BRIGHTNESS in self._attribute:
+            return True
+        return False
+
+    @property
+    def child_lock(self) -> bool:
+        """Return if child lock is enabled"""
+        if ConfigAttribute.BRIGHTNESS not in self._attribute:
+            return None
+        return bool(int(self._attribute[ConfigAttribute.BRIGHTNESS]))
+
+    @property
+    def child_lock_supported(self) -> bool():
+        """Return if child lock is supported. This function is used to lock out unsupported
+         functionality from the UI if the model doesnt support modes"""
+        if ConfigAttribute.CHILD_LOCK in self._attribute:
             return True
         return False
 
     @property
     def filter_status(self) -> str:
         """Return the current filter status."""
-        if "filter_status" not in self._attribute:
+        if ConfigAttribute.FILTER_STATUS not in self._attribute:
             return None
-        return self._attribute["filter_status"]
+        return self._attribute[ConfigAttribute.FILTER_STATUS]
 
     async def set_fan_speed(self, new_speed) -> None:
         await self.hass.async_add_executor_job(
-            lambda: self.api_client.set_fan_speed(self.id, new_speed)
+            lambda: self.api_client.set_attribute(self._uuid, ConfigAttribute.FAN_SPEED, new_speed)
         )
-        self._attribute["fan_speed"] = new_speed
+        self._attribute[ConfigAttribute.FAN_SPEED] = new_speed
         await self.async_refresh()
 
     async def set_fan_mode(self, new_mode) -> None:
         await self.hass.async_add_executor_job(
-            lambda: self.api_client.set_fan_mode(self.id, new_mode)
+            lambda: self.api_client.set_attribute(self._uuid, ConfigAttribute.FAN_MODE, new_mode)
         )
-        self._attribute["mode"] = new_mode
+        self._attribute[ConfigAttribute.FAN_MODE] = new_mode
+        await self.async_refresh()
+
+    async def set_child_lock(self, child_lock: bool) -> None:
+        device_child_lock = str(int(child_lock))
+        await self.hass.async_add_executor_job(
+            lambda: self.api_client.set_attribute(self._uuid, ConfigAttribute.CHILD_LOCK, device_child_lock)
+        )
+        self._attribute[ConfigAttribute.CHILD_LOCK] = device_child_lock
+        await self.async_refresh()
+
+    async def set_brightness(self, new_brightness: int) -> None:
+        await self.hass.async_add_executor_job(
+            lambda: self.api_client.set_attribute(self._uuid, ConfigAttribute.BRIGHTNESS, str(new_brightness))
+        )
+        self._attribute[ConfigAttribute.BRIGHTNESS] = str(new_brightness)
         await self.async_refresh()
 
     async def _update_device(self, *_) -> None:
