@@ -22,7 +22,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         if device.model != 'foobot':
             entities.extend(
                 [
-                    BlueairLight(f"{device.device_name}_light", device),
+                    BlueairLight(f"{device.device_name}_backlight", device),
                 ]
             )
     async_add_entities(entities)
@@ -33,7 +33,8 @@ class BlueairLight(BlueairEntity, LightEntity):
 
     def __init__(self, name, device):
         """Initialize the Light Entity."""
-        super().__init__("Light", name, device)
+        super().__init__("Backlight", name, device)
+        self._state: Any = None
 
     @property
     def supported_color_modes(self) -> set[ColorMode]:
