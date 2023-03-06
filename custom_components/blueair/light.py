@@ -6,10 +6,9 @@ from homeassistant.components.light import (
     SUPPORT_BRIGHTNESS,
 )
 
-from math import copysign
 from typing import Any, Optional
 
-from .const import DOMAIN, LOGGER
+from .const import DOMAIN
 from .device import BlueairDataUpdateCoordinator
 from .entity import BlueairEntity
 
@@ -38,7 +37,7 @@ class BlueairLight(BlueairEntity, LightEntity):
 
     @property
     def supported_color_modes(self) -> set[ColorMode]:
-        color_modes: set(ColorMode) = set()
+        color_modes: set[ColorMode] = set()
         
         if self._device.brightness_supported:
             color_modes.add(ColorMode.BRIGHTNESS)
@@ -58,8 +57,10 @@ class BlueairLight(BlueairEntity, LightEntity):
         return self._device.brightness
 
     @property
-    def is_on(self) -> bool:
-        return self._device.brightness > 0
+    def is_on(self) -> Optional[bool]:
+        if self._device.brightness is not None:
+            return self._device.brightness > 0
+        return None
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on or control the light."""

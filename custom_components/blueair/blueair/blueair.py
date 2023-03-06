@@ -4,7 +4,7 @@ import base64
 import logging
 import requests
 
-from typing import Any, Dict, List, Mapping, Union
+from typing import Any, Dict, List, Mapping, Union, Optional
 from typing_extensions import TypedDict
 
 logger = logging.getLogger(__name__)
@@ -46,8 +46,8 @@ class BlueAir(object):
         self,
         username: str,
         password: str,
-        home_host: str = None,
-        auth_token: str = None,
+        home_host: Optional[str] = None,
+        auth_token: Optional[str] = None,
     ) -> None:
         """
         Instantiate a new Blueair client with the provided username and password.
@@ -114,6 +114,9 @@ class BlueAir(object):
         This is a low level function that is used by most of the client API calls.
         """
         logger.debug(f"GET https://{self.home_host}/v2/{path}")
+        
+        if self.auth_token is None:
+            return None
 
         return requests.get(
             f"https://{self.home_host}/v2/{path}",
@@ -169,6 +172,9 @@ class BlueAir(object):
         """
         Set the attribute value
         """
+        if self.auth_token is None:
+            return None
+
         res = requests.post(
             f"https://{self.home_host}/v2/device/{device_uuid}/attribute/{attribute}/",
             headers={

@@ -1,7 +1,7 @@
 """Blueair device object."""
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Optional
 from async_timeout import timeout
 
 from . import blueair
@@ -88,70 +88,70 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         return self._device_information.get("compatibility", self.id)
 
     @property
-    def temperature(self) -> float:
+    def temperature(self) -> Optional[float]:
         """Return the current temperature in degrees C."""
         if DatapointAttribute.TEMPERATURE not in self._datapoint:
             return None
         return self._datapoint[DatapointAttribute.TEMPERATURE]
 
     @property
-    def humidity(self) -> float:
+    def humidity(self) -> Optional[float]:
         """Return the current relative humidity percentage."""
         if DatapointAttribute.HUMIDITY not in self._datapoint:
             return None
         return self._datapoint[DatapointAttribute.HUMIDITY]
 
     @property
-    def co2(self) -> float:
+    def co2(self) -> Optional[float]:
         """Return the current co2."""
         if DatapointAttribute.CO2 not in self._datapoint:
             return None
         return self._datapoint[DatapointAttribute.CO2]
 
     @property
-    def voc(self) -> float:
+    def voc(self) -> Optional[float]:
         """Return the current voc."""
         if DatapointAttribute.VOC not in self._datapoint:
             return None
         return self._datapoint[DatapointAttribute.VOC]
 
     @property
-    def pm1(self) -> float:
+    def pm1(self) -> Optional[float]:
         """Return the current pm1."""
         if DatapointAttribute.PM1 not in self._datapoint:
             return None
         return self._datapoint[DatapointAttribute.PM1]
 
     @property
-    def pm10(self) -> float:
+    def pm10(self) -> Optional[float]:
         """Return the current pm10."""
         if DatapointAttribute.PM10 not in self._datapoint:
             return None
         return self._datapoint[DatapointAttribute.PM10]
 
     @property
-    def pm25(self) -> float:
+    def pm25(self) -> Optional[float]:
         """Return the current pm25."""
         if DatapointAttribute.PM25 not in self._datapoint:
             return None
         return self._datapoint[DatapointAttribute.PM25]
 
     @property
-    def all_pollution(self) -> float:
+    def all_pollution(self) -> Optional[float]:
         """Return all pollution"""
         if DatapointAttribute.ALL_POLLUTION not in self._datapoint:
             return None
         return self._datapoint[DatapointAttribute.ALL_POLLUTION]
 
     @property
-    def fan_speed(self) -> int:
+    def fan_speed(self) -> Optional[int]:
         """Return the current fan speed."""
         if ConfigAttribute.FAN_SPEED not in self._attribute:
             return None
         return int(self._attribute[ConfigAttribute.FAN_SPEED])
 
     @property
-    def is_on(self) -> bool():
+    def is_on(self) -> Optional[bool]:
         """Return the current fan state."""
         if ConfigAttribute.FAN_SPEED not in self._attribute:
             return None
@@ -160,14 +160,14 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         return True
 
     @property
-    def fan_mode(self) -> str:
+    def fan_mode(self) -> Optional[str]:
         """Return the current fan mode"""
         if self._attribute[ConfigAttribute.FAN_MODE] == "manual":
             return None
         return self._attribute[ConfigAttribute.FAN_MODE]
 
     @property
-    def fan_mode_supported(self) -> bool():
+    def fan_mode_supported(self) -> bool:
         """Return if fan mode is supported. This function is used to lock out unsupported
          functionality from the UI if the model doesnt support modes"""
         if ConfigAttribute.FAN_MODE in self._attribute:
@@ -175,7 +175,7 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         return False
 
     @property
-    def brightness(self) -> int:
+    def brightness(self) -> Optional[int]:
         """Return current backlight brightness"""
         if ConfigAttribute.BRIGHTNESS not in self._attribute:
             return None
@@ -183,7 +183,7 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         return int(round(int(self._attribute[ConfigAttribute.BRIGHTNESS]) * BRIGHTNESS_MULTIPLIER, 0))
 
     @property
-    def brightness_supported(self) -> bool():
+    def brightness_supported(self) -> bool:
         """Return if brightness is supported. This function is used to lock out unsupported
          functionality from the UI if the model doesnt support modes"""
         if ConfigAttribute.BRIGHTNESS in self._attribute:
@@ -191,22 +191,22 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         return False
 
     @property
-    def child_lock(self) -> bool:
+    def child_lock(self) -> Optional[bool]:
         """Return if child lock is enabled"""
         if ConfigAttribute.BRIGHTNESS not in self._attribute:
             return None
         return bool(int(self._attribute[ConfigAttribute.BRIGHTNESS]))
 
     @property
-    def child_lock_supported(self) -> bool():
+    def child_lock_supported(self) -> bool:
         """Return if child lock is supported. This function is used to lock out unsupported
-         functionality from the UI if the model doesnt support modes"""
+        functionality from the UI if the model doesnt support modes"""
         if ConfigAttribute.CHILD_LOCK in self._attribute:
             return True
         return False
 
     @property
-    def filter_status(self) -> str:
+    def filter_status(self) -> Optional[str]:
         """Return the current filter status."""
         if ConfigAttribute.FILTER_STATUS not in self._attribute:
             return None
