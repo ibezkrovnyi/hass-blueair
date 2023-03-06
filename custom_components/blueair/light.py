@@ -52,15 +52,15 @@ class BlueairLight(BlueairEntity, LightEntity):
         return 0
 
     @property
-    def brightness(self) -> Optional[int]:
-        """Return the current backlight brightness."""
-        return self._device.brightness
-
-    @property
     def is_on(self) -> Optional[bool]:
         if self._device.brightness is not None:
             return self._device.brightness > 0
         return None
+
+    @property
+    def brightness(self) -> Optional[int]:
+        """Return the current backlight brightness."""
+        return self._device.brightness
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on or control the light."""

@@ -13,6 +13,7 @@ class BlueairEntity(Entity):
 
     _attr_force_update = False
     _attr_should_poll = False
+    _attr_has_entity_name = True
 
     def __init__(
         self,

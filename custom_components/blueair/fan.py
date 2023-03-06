@@ -42,7 +42,7 @@ class BlueairFan(BlueairEntity, FanEntity):
     def __init__(self, name, device):
         """Initialize the temperature sensor."""
         super().__init__("Fan", name, device)
-        self._state: float = None
+        self._state: Any = None
 
     @property
     def supported_features(self) -> int:
@@ -52,7 +52,7 @@ class BlueairFan(BlueairEntity, FanEntity):
         return SUPPORT_SET_SPEED
 
     @property
-    def is_on(self) -> int:
+    def is_on(self) -> Optional[bool]:
         return self._device.is_on
 
     @property
