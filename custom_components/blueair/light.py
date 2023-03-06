@@ -13,8 +13,6 @@ from .const import DOMAIN, LOGGER
 from .device import BlueairDataUpdateCoordinator
 from .entity import BlueairEntity
 
-BRIGHTNESS_MULTIPLIER = 63.75
-
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Blueair backlight from config entry."""
     devices: list[BlueairDataUpdateCoordinator] = hass.data[DOMAIN][
@@ -57,10 +55,7 @@ class BlueairLight(BlueairEntity, LightEntity):
     @property
     def brightness(self) -> Optional[int]:
         """Return the current backlight brightness."""
-        if self._device.brightness is not None:
-            return int(round(self._device.brightness * BRIGHTNESS_MULTIPLIER, 0))
-        else:
-            return None
+        return self._device.brightness
 
     @property
     def is_on(self) -> bool:
@@ -68,13 +63,8 @@ class BlueairLight(BlueairEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on or control the light."""
-        await self.async_set_brightness(kwargs.get(ATTR_BRIGHTNESS, 255))
+        await self._device.set_brightness(kwargs.get(ATTR_BRIGHTNESS, 255))
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off or control the light."""
-        await self.async_set_brightness(kwargs.get(ATTR_BRIGHTNESS, 0))
-
-    async def async_set_brightness(self, next_brightness: int) -> None:
-        """Sets backlight brightness."""
-        next_device_brightness = int(round(next_brightness / BRIGHTNESS_MULTIPLIER))
-        await self._device.set_brightness(next_device_brightness)
+        await self._device.set_brightness(kwargs.get(ATTR_BRIGHTNESS, 0))

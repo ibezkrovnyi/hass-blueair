@@ -34,6 +34,8 @@ class DatapointAttribute(StrEnum):
     PM25 = "pm25"
     PM10 = "pm10"
 
+BRIGHTNESS_MULTIPLIER = 63.75
+
 class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
     """Blueair device object."""
 
@@ -177,7 +179,8 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         """Return current backlight brightness"""
         if ConfigAttribute.BRIGHTNESS not in self._attribute:
             return None
-        return int(self._attribute[ConfigAttribute.BRIGHTNESS])
+
+        return int(round(int(self._attribute[ConfigAttribute.BRIGHTNESS]) * BRIGHTNESS_MULTIPLIER, 0))
 
     @property
     def brightness_supported(self) -> bool():
@@ -231,11 +234,12 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         self._attribute[ConfigAttribute.CHILD_LOCK] = device_child_lock
         await self.async_refresh()
 
-    async def set_brightness(self, new_brightness: int) -> None:
+    async def set_brightness(self, next_brightness: int) -> None:
+        next_device_brightness = str(int(round(next_brightness / BRIGHTNESS_MULTIPLIER)))
         await self.hass.async_add_executor_job(
-            lambda: self.api_client.set_attribute(self._uuid, ConfigAttribute.BRIGHTNESS, str(new_brightness))
+            lambda: self.api_client.set_attribute(self._uuid, ConfigAttribute.BRIGHTNESS, next_device_brightness)
         )
-        self._attribute[ConfigAttribute.BRIGHTNESS] = str(new_brightness)
+        self._attribute[ConfigAttribute.BRIGHTNESS] = next_device_brightness
         await self.async_refresh()
 
     async def _update_device(self, *_) -> None:
