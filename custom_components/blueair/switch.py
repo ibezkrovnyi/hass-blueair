@@ -29,6 +29,7 @@ class BlueairChildLockSwitch(BlueairEntity, SwitchEntity):
     """Controls Child lock switch."""
 
     _attr_icon: str = "mdi:account-lock"
+    _attr_should_poll = True
 
     def __init__(self, name, device):
         """Initialize the Switch Entity."""
