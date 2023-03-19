@@ -10,20 +10,15 @@ from .device import BlueairDataUpdateCoordinator
 from .entity import BlueairEntity
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up the Blueair backlight from config entry."""
+    """Set up the Blueair child locks from config entry."""
     devices: list[BlueairDataUpdateCoordinator] = hass.data[DOMAIN][
         config_entry.entry_id
     ]["devices"]
     entities = []
     for device in devices:
-        if device.model != 'foobot':
-            entities.extend(
-                [
-                    BlueairChildLockSwitch(f"{device.device_name}_child_lock", device),
-                ]
-            )
+        if device.model != 'foobot' and device.child_lock is not None:
+            entities.append(BlueairChildLockSwitch(f"{device.device_name}_child_lock", device))
     async_add_entities(entities)
-
 
 class BlueairChildLockSwitch(BlueairEntity, SwitchEntity):
     """Controls Child lock switch."""

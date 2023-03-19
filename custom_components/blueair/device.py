@@ -15,13 +15,71 @@ import homeassistant.util.dt as dt_util
 
 from .const import DOMAIN, LOGGER
 
+class DeviceAttribute(StrEnum):
+    """Possible blueair device information attributes."""
+    # 'XXXX'
+    UUID = 'uuid'
+    # 'Our kitchen air purifier'
+    NAME = 'name'
+    # 'Europe/Warsaw'
+    TIMEZONE = 'timezone'
+    # 'classic_480i'
+    COMPATIBILITY = 'compatibility'
+    # '1.0.6'
+    MODEL = 'model'
+    # 'YYYY'
+    MAC = 'mac'
+    # '1.1.38'
+    FIRMWARE = 'firmware'
+    # '1.0.35'
+    MCU_FIRMWARE = 'mcuFirmware'
+    # 'V10'
+    WLAN_DRIVER = 'wlanDriver'
+    # 1631550455
+    LAST_SYNC_DATE = 'lastSyncDate'
+    # 1600350827
+    INSTALLATION_DATE = 'installationDate'
+    # 1600350827
+    LAST_CALIBRATION_DATE = 'lastCalibrationDate'
+    # 25629788
+    INIT_USAGE_PERIOD = 'initUsagePeriod'
+    # 10975
+    REBOOT_PERIOD = 'rebootPeriod'
+    # 1600350827
+    AIM_UPDATE_DATE = 'aimUpdateDate'
+    # 'kitchen'
+    ROOM_LOCATION = 'roomLocation'
+    # 'yyy' (unavailable on Classic 480i)
+    NICKNAME = 'nickname'
+    # 'S0000000000' (unavailable on Classic 480i)
+    AIM_SERIAL_NUMBER = 'aimSerialNumber'
+
 class ConfigAttribute(StrEnum):
     """Possible blueair configuration attributes."""
+    # '0', '1'
     CHILD_LOCK = "child_lock"
+    # '0', '1', '2', '3', '4'
     BRIGHTNESS = "brightness"
+    # 'manual' or 'auto'
     FAN_MODE = "mode"
+    # '0', '1', '2', '3'
     FAN_SPEED = "fan_speed"
+    # '1948;73;197;26;298;51542'
+    FAN_USAGE = 'fan_usage'
+    # 'OK'
     FILTER_STATUS = "filter_status"
+    # 'cn'
+    FILTER_TYPE = 'filterType'
+    # 'pm', 'pm_voc'
+    AUTO_MODE_DEPENDENCY = 'auto_mode_dependency'
+    DEALER_NAME = 'dealerName'
+    DEALER_COUNTRY = 'dealerCountry'
+    # 'DD/M/YYYY'
+    PURCHASE_DATE = 'purchaseDate'
+    # 'UUU'
+    SERIAL = 'serial'
+    # wifi_status is always '1' on Classic 480i
+    WIFI_STATUS = "wifi_status"
 
 class DatapointAttribute(StrEnum):
     """Possible blueair datapoint attributes."""
@@ -73,9 +131,14 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         return self._uuid
 
     @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return datetime.now() - self._device_information.get(DeviceAttribute.LAST_SYNC_DATE, 0) < 60
+
+    @property
     def device_name(self) -> str:
         """Return device name."""
-        return self._device_information.get("nickname", f"{self.name}")
+        return self._device_information.get(DeviceAttribute.NICKNAME, f"{self.name}")
 
     @property
     def manufacturer(self) -> str:
@@ -85,7 +148,7 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
     @property
     def model(self) -> str:
         """Return model for device, or the UUID if it's not known."""
-        return self._device_information.get("compatibility", self.id)
+        return self._device_information.get(DeviceAttribute.COMPATIBILITY, self.id)
 
     @property
     def temperature(self) -> Optional[float]:
@@ -183,27 +246,11 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         return int(round(int(self._attribute[ConfigAttribute.BRIGHTNESS]) * BRIGHTNESS_MULTIPLIER, 0))
 
     @property
-    def brightness_supported(self) -> bool:
-        """Return if brightness is supported. This function is used to lock out unsupported
-         functionality from the UI if the model doesnt support modes"""
-        if ConfigAttribute.BRIGHTNESS in self._attribute:
-            return True
-        return False
-
-    @property
     def child_lock(self) -> Optional[bool]:
         """Return if child lock is enabled"""
-        if ConfigAttribute.BRIGHTNESS not in self._attribute:
+        if ConfigAttribute.CHILD_LOCK not in self._attribute:
             return None
-        return bool(int(self._attribute[ConfigAttribute.BRIGHTNESS]))
-
-    @property
-    def child_lock_supported(self) -> bool:
-        """Return if child lock is supported. This function is used to lock out unsupported
-        functionality from the UI if the model doesnt support modes"""
-        if ConfigAttribute.CHILD_LOCK in self._attribute:
-            return True
-        return False
+        return bool(int(self._attribute[ConfigAttribute.CHILD_LOCK]))
 
     @property
     def filter_status(self) -> Optional[str]:
@@ -228,7 +275,6 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def set_child_lock(self, child_lock: bool) -> None:
         device_child_lock = str(int(child_lock))
-        LOGGER.info(f"igor1: child_lock={child_lock}, device_child_lock={device_child_lock}")
         await self.hass.async_add_executor_job(
             lambda: self.api_client.set_attribute(self._uuid, ConfigAttribute.CHILD_LOCK, device_child_lock)
         )

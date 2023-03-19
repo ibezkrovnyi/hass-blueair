@@ -143,10 +143,6 @@ class BlueAir(object):
 
         The return value is a dictionary containing key-value pairs for any
         available attributes.
-
-        Note: the data for this API call is only updated once every 5 minutes.
-        Calling it more often will return the same respone from the server and
-        should be avoided to limit server load.
         """
         attributes = {}
         for item in self.api_call(f"device/{device_uuid}/attributes/"):
