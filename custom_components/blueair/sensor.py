@@ -1,4 +1,7 @@
 """Support for Blueair sensors."""
+from datetime import datetime
+from typing import Optional
+
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import (
     DEVICE_CLASS_CO2,
@@ -8,8 +11,11 @@ from homeassistant.const import (
     DEVICE_CLASS_PM10,
     DEVICE_CLASS_PM25,
     DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS,
+    DEVICE_CLASS_TIMESTAMP,
     TEMP_CELSIUS,
     PERCENTAGE,
+    CONCENTRATION_PARTS_PER_MILLION,
+    CONCENTRATION_PARTS_PER_BILLION,
 )
 
 from .const import DOMAIN
@@ -18,7 +24,6 @@ from .entity import BlueairEntity
 
 NAME_TEMPERATURE = "Temperature"
 NAME_HUMIDITY = "Humidity"
-
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Blueair sensors from config entry."""
@@ -43,9 +48,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             if device.pm1 is not None: entities.append(BlueairPM1Sensor(f"{device.device_name}_pm1", device))
             if device.pm10 is not None: entities.append(BlueairPM10Sensor(f"{device.device_name}_pm10", device))
             if device.pm25 is not None: entities.append(BlueairPM25Sensor(f"{device.device_name}_pm25", device))
+            if device.available is not None: entities.append(BlueairLastSeenSensor(f"{device.device_name}_last_seen", device))
 
     async_add_entities(entities)
-
 
 class BlueairTemperatureSensor(BlueairEntity, SensorEntity):
     """Monitors the temperature."""
@@ -56,10 +61,10 @@ class BlueairTemperatureSensor(BlueairEntity, SensorEntity):
     def __init__(self, name, device):
         """Initialize the temperature sensor."""
         super().__init__(NAME_TEMPERATURE, name, device)
-        self._state: float = None
+        # self._state: float = None
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> Optional[float]:
         """Return the current temperature."""
         if self._device.temperature is None:
             return None
@@ -75,10 +80,10 @@ class BlueairHumiditySensor(BlueairEntity, SensorEntity):
     def __init__(self, name, device):
         """Initialize the humidity sensor."""
         super().__init__(NAME_HUMIDITY, name, device)
-        self._state: float = None
+        # self._state: float = None
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> Optional[float]:
         """Return the current humidity."""
         if self._device.humidity is None:
             return None
@@ -89,15 +94,15 @@ class BlueairCO2Sensor(BlueairEntity, SensorEntity):
     """Monitors the CO2."""
 
     _attr_device_class = DEVICE_CLASS_CO2
-    _attr_native_unit_of_measurement = "ppm"
+    _attr_native_unit_of_measurement = CONCENTRATION_PARTS_PER_MILLION
 
     def __init__(self, name, device):
         """Initialize the CO2 sensor."""
         super().__init__("co2", name, device)
-        self._state: float = None
+        # self._state: float = None
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> Optional[float]:
         """Return the current co2."""
         if self._device.co2 is None:
             return None
@@ -108,15 +113,15 @@ class BlueairVOCSensor(BlueairEntity, SensorEntity):
     """Monitors the VOC."""
 
     _attr_device_class = DEVICE_CLASS_VOLATILE_ORGANIC_COMPOUNDS
-    _attr_native_unit_of_measurement = "ppb"
+    _attr_native_unit_of_measurement = CONCENTRATION_PARTS_PER_BILLION
 
     def __init__(self, name, device):
         """Initialize the VOC sensor."""
         super().__init__("voc", name, device)
-        self._state: float = None
+        # self._state: float = None
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> Optional[float]:
         """Return the current voc."""
         if self._device.voc is None:
             return None
@@ -126,16 +131,16 @@ class BlueairVOCSensor(BlueairEntity, SensorEntity):
 class BlueairAllPollutionSensor(BlueairEntity, SensorEntity):
     """Monitors the all pollution."""
     """The API returns the unit for this measurement as as % """
-    _attr_native_unit_of_measurement = "%"
+    _attr_native_unit_of_measurement = PERCENTAGE
 
     def __init__(self, name, device):
         """Initialize the all pollution sensor."""
         super().__init__("all_pollution", name, device)
-        self._state: float = None
+        # self._state: float = None
         self._attr_icon = "mdi:molecule"
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> Optional[float]:
         """Return the current all pollution."""
         if self._device.all_pollution is None:
             return None
@@ -151,10 +156,10 @@ class BlueairPM1Sensor(BlueairEntity, SensorEntity):
     def __init__(self, name, device):
         """Initialize the pm1 sensor."""
         super().__init__("pm1", name, device)
-        self._state: float = None
+        # self._state: float = None
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> Optional[float]:
         """Return the current pm1."""
         if self._device.pm1 is None:
             return None
@@ -170,10 +175,10 @@ class BlueairPM10Sensor(BlueairEntity, SensorEntity):
     def __init__(self, name, device):
         """Initialize the pm10 sensor."""
         super().__init__("pm10", name, device)
-        self._state: float = None
+        # self._state: float = None
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> Optional[float]:
         """Return the current pm10."""
         if self._device.pm10 is None:
             return None
@@ -189,10 +194,10 @@ class BlueairPM25Sensor(BlueairEntity, SensorEntity):
     def __init__(self, name, device):
         """Initialize the pm25 sensor."""
         super().__init__("pm25", name, device)
-        self._state: float = None
+        # self._state: float = None
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> Optional[float]:
         """Return the current pm25."""
         if self._device.pm25 is None:
             return None
@@ -204,12 +209,26 @@ class BlueairFilterStatusSensor(BlueairEntity, SensorEntity):
     def __init__(self, name, device):
         """Initialize the filter_status sensor."""
         super().__init__("filter_status", name, device)
-        self._state: str = None
+        # self._state: str = None
         self._attr_icon = "mdi:air-filter"
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> Optional[str]:
         """Return the current filter_status."""
         if self._device.filter_status is None:
             return None
         return str(self._device.filter_status)
+
+class BlueairLastSeenSensor(BlueairEntity, SensorEntity):
+    """Monitors last seen datetime.
+    Blueair Classic 480i now() - last_seen is usually 30..35 seconds"""
+
+    _attr_device_class = DEVICE_CLASS_TIMESTAMP
+    # _attr_native_unit_of_measurement = TEMP_CELSIUS
+
+    def __init__(self, name, device):
+        super().__init__("last_seen", name, device)
+
+    @property
+    def native_value(self) -> Optional[datetime]:
+        return self._device.last_seen

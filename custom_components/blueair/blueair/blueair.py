@@ -143,6 +143,9 @@ class BlueAir(object):
 
         The return value is a dictionary containing key-value pairs for any
         available attributes.
+
+        Example
+         {'auto_mode_dependency': 'pm', 'brightness': '4', 'child_lock': '0', 'dealerCountry': 'Polska', 'dealerName': 'PPHU LOGO Spólka cywilna Marcin Bartoszewicz - klimasklep.pl', 'fan_speed': '2', 'fan_usage': '1930;13;193;8;215;51625', 'filterType': 'cn', 'filter_status': 'OK', 'mode': 'manual', 'purchaseDate': '18/9/2017', 'serial': 'K480i17101981', 'wifi_status': '1'}
         """
         attributes = {}
         for item in self.api_call(f"device/{device_uuid}/attributes/"):
@@ -203,7 +206,13 @@ class BlueAir(object):
         """
         data = self.api_call(f"device/{device_uuid}/datapoint/0/last/0/")
 
+        logger.error(f"igor17.1 {data}")
+
         results = transform_data_points(data)
+
+        logger.error(f"igor17.2 {results}")
+        logger.error(f"igor17.3 {results[-1]}")
+
         return results[-1]
 
     # Note: refreshes every 5 minutes

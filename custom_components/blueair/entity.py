@@ -1,5 +1,5 @@
 """Base entity class for Blueair entities."""
-from typing import Any
+from typing import Any, Optional
 
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
 from homeassistant.helpers.entity import DeviceInfo, Entity
@@ -38,6 +38,11 @@ class BlueairEntity(Entity):
             "model": self._device.model,
             "name": self._device.device_name,
         }
+
+    @property
+    def available(self) -> Optional[bool]:
+        """Return if entity is available."""
+        return self._device.available
 
     async def async_update(self):
         """Update Blueair entity."""

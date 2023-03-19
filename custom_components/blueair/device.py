@@ -1,6 +1,6 @@
 """Blueair device object."""
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from async_timeout import timeout
 
@@ -11,7 +11,6 @@ API = blueair.BlueAir
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.backports.enum import StrEnum
-import homeassistant.util.dt as dt_util
 
 from .const import DOMAIN, LOGGER
 
@@ -56,33 +55,17 @@ class DeviceAttribute(StrEnum):
 
 class ConfigAttribute(StrEnum):
     """Possible blueair configuration attributes."""
-    # '0', '1'
     CHILD_LOCK = "child_lock"
-    # '0', '1', '2', '3', '4'
     BRIGHTNESS = "brightness"
-    # 'manual' or 'auto'
     FAN_MODE = "mode"
-    # '0', '1', '2', '3'
     FAN_SPEED = "fan_speed"
-    # '1948;73;197;26;298;51542'
-    FAN_USAGE = 'fan_usage'
-    # 'OK'
     FILTER_STATUS = "filter_status"
-    # 'cn'
-    FILTER_TYPE = 'filterType'
-    # 'pm', 'pm_voc'
-    AUTO_MODE_DEPENDENCY = 'auto_mode_dependency'
-    DEALER_NAME = 'dealerName'
-    DEALER_COUNTRY = 'dealerCountry'
-    # 'DD/M/YYYY'
-    PURCHASE_DATE = 'purchaseDate'
-    # 'UUU'
-    SERIAL = 'serial'
     # wifi_status is always '1' on Classic 480i
     WIFI_STATUS = "wifi_status"
 
 class DatapointAttribute(StrEnum):
     """Possible blueair datapoint attributes."""
+    TIMESTAMP = "timestamp"
     ALL_POLLUTION = "all_pollution"
     TEMPERATURE = "temperature"
     HUMIDITY = "humidity"
@@ -109,6 +92,7 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         self._device_information: dict[str, Any] = {}
         self._datapoint: dict[str, Any] = {}
         self._attribute: dict[str, Any] = {}
+        self._available: Optional[bool] = False
 
         super().__init__(
             hass,
@@ -131,11 +115,6 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         return self._uuid
 
     @property
-    def available(self) -> bool:
-        """Return if entity is available."""
-        return datetime.now() - self._device_information.get(DeviceAttribute.LAST_SYNC_DATE, 0) < 60
-
-    @property
     def device_name(self) -> str:
         """Return device name."""
         return self._device_information.get(DeviceAttribute.NICKNAME, f"{self.name}")
@@ -149,6 +128,17 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
     def model(self) -> str:
         """Return model for device, or the UUID if it's not known."""
         return self._device_information.get(DeviceAttribute.COMPATIBILITY, self.id)
+
+    @property
+    def last_seen(self) -> Optional[datetime]:
+        timestamp = self._datapoint.get(DatapointAttribute.TIMESTAMP)
+        if timestamp is None:
+            return None
+        return datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)
+
+    @property
+    def available(self) -> Optional[bool]:
+        return self._available
 
     @property
     def temperature(self) -> Optional[float]:
@@ -308,3 +298,11 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
             lambda: self.api_client.get_attributes(self._uuid)
         )
         LOGGER.info(f"_attribute: {self._attribute}")
+        self._available = self._check_if_device_is_available()
+
+    def _check_if_device_is_available(self) -> Optional[bool]:
+        last_sync_date = self._datapoint.get(DatapointAttribute.TIMESTAMP)
+        if last_sync_date is None:
+            return None
+        now = int(datetime.now(tz=timezone.utc).timestamp())
+        return now - last_sync_date < 5 * 60 + 30
