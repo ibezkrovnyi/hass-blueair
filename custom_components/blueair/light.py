@@ -20,7 +20,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities = []
     for device in devices:
         if device.model != 'foobot' and device.brightness is not None:
-            entities.append(BlueairLight(f"{device.device_name}_light", device))
+            entities.append(BlueairLight(f"{device.device_name} Light", device))
     async_add_entities(entities)
 
 

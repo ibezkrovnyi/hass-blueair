@@ -17,7 +17,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities = []
     for device in devices:
         if device.model != 'foobot' and device.child_lock is not None:
-            entities.append(BlueairChildLockSwitch(f"{device.device_name}_child_lock", device))
+            entities.append(BlueairChildLockSwitch(f"{device.device_name} Child Lock", device))
     async_add_entities(entities)
 
 class BlueairChildLockSwitch(BlueairEntity, SwitchEntity):

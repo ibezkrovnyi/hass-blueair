@@ -28,7 +28,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities = []
     for device in devices:
         if device.model != 'foobot' and device.fan_speed is not None:
-            entities.append(BlueairFan(f"{device.device_name}_fan", device))
+            entities.append(BlueairFan(f"{device.device_name} Fan", device))
     async_add_entities(entities)
 
 

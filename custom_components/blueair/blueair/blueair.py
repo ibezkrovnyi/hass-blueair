@@ -206,12 +206,7 @@ class BlueAir(object):
         """
         data = self.api_call(f"device/{device_uuid}/datapoint/0/last/0/")
 
-        logger.error(f"igor17.1 {data}")
-
         results = transform_data_points(data)
-
-        logger.error(f"igor17.2 {results}")
-        logger.error(f"igor17.3 {results[-1]}")
 
         return results[-1]
 

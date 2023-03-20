@@ -38,17 +38,17 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         ) or device.model == "foobot":
             pass
         else:
-            if device.temperature is not None: entities.append(BlueairTemperatureSensor(f"{device.device_name}_temperature", device))
-            if device.humidity is not None: entities.append(BlueairHumiditySensor(f"{device.device_name}_humidity", device))
-            if device.co2 is not None: entities.append(BlueairCO2Sensor(f"{device.device_name}_co2", device))
-            if device.voc is not None: entities.append(BlueairVOCSensor(f"{device.device_name}_voc", device))
+            if device.temperature is not None: entities.append(BlueairTemperatureSensor(f"{device.device_name} Temperature", device))
+            if device.humidity is not None: entities.append(BlueairHumiditySensor(f"{device.device_name} Humidity", device))
+            if device.co2 is not None: entities.append(BlueairCO2Sensor(f"{device.device_name} CO2", device))
+            if device.voc is not None: entities.append(BlueairVOCSensor(f"{device.device_name} VOC", device))
             if device.all_pollution is not None: entities.append(BlueairAllPollutionSensor(
-                        f"{device.device_name}_all_pollution", device
+                        f"{device.device_name} Air Pollution", device
                     ))
-            if device.pm1 is not None: entities.append(BlueairPM1Sensor(f"{device.device_name}_pm1", device))
-            if device.pm10 is not None: entities.append(BlueairPM10Sensor(f"{device.device_name}_pm10", device))
-            if device.pm25 is not None: entities.append(BlueairPM25Sensor(f"{device.device_name}_pm25", device))
-            if device.available is not None: entities.append(BlueairLastSeenSensor(f"{device.device_name}_last_seen", device))
+            if device.pm1 is not None: entities.append(BlueairPM1Sensor(f"{device.device_name} PM1", device))
+            if device.pm10 is not None: entities.append(BlueairPM10Sensor(f"{device.device_name} PM10", device))
+            if device.pm25 is not None: entities.append(BlueairPM25Sensor(f"{device.device_name} PM2.5", device))
+            if device.available is not None: entities.append(BlueairLastSeenSensor(f"{device.device_name} Last Seen", device))
 
     async_add_entities(entities)
 
