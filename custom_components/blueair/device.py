@@ -77,6 +77,19 @@ class DatapointAttribute(StrEnum):
 
 BRIGHTNESS_MULTIPLIER = 63.75
 
+class DataAttribute(StrEnum):
+    AVAILABLE = "available"
+    LAST_SEEN = "last seen"
+    TEMPERATURE = "temperature"
+    HUMIDITY = "humidity"
+    CO2 = "co2"
+    PM1 = "pm1"
+    PM25 = "pm25"
+    PM10 = "pm10"
+    VOC = "voc"
+    ALL_POLLUTION = "all pollution"
+    FILTER_STATUS = "filter status"
+    
 class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
     """Blueair device object."""
 
@@ -101,13 +114,27 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(seconds=60),
         )
 
-    async def _async_update_data(self):
+    async def _async_update_data(self) -> dict[DataAttribute, Any]:
         """Update data via library."""
         try:
             async with timeout(10):
                 await asyncio.gather(*[self._update_device()])
         except Exception as error:
             raise UpdateFailed(error) from error
+
+        return {
+            DataAttribute.TEMPERATURE: self._datapoint.get(DatapointAttribute.TEMPERATURE),
+            DataAttribute.HUMIDITY: self._datapoint.get(DatapointAttribute.HUMIDITY),
+            DataAttribute.PM1: self._datapoint.get(DatapointAttribute.PM1),
+            DataAttribute.PM25: self._datapoint.get(DatapointAttribute.PM25),
+            DataAttribute.PM10: self._datapoint.get(DatapointAttribute.PM10),
+            DataAttribute.CO2: self._datapoint.get(DatapointAttribute.CO2),
+            DataAttribute.VOC: self._datapoint.get(DatapointAttribute.VOC),
+            DataAttribute.ALL_POLLUTION: self._datapoint.get(DatapointAttribute.ALL_POLLUTION),
+            DataAttribute.FILTER_STATUS: self._attribute.get(ConfigAttribute.FILTER_STATUS),
+            DataAttribute.LAST_SEEN: self._get_last_seen(),
+            DataAttribute.AVAILABLE: self._check_if_device_is_available(),
+        }
 
     @property
     def id(self) -> str:
@@ -117,7 +144,13 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
     @property
     def device_name(self) -> str:
         """Return device name."""
-        return self._device_information.get(DeviceAttribute.NICKNAME, f"{self.name}")
+        return self._device_information.get(
+            DeviceAttribute.NICKNAME, 
+            self._device_information.get(
+                DeviceAttribute.NAME,
+                f"{self.name}",
+            )
+        )
 
     @property
     def manufacturer(self) -> str:
@@ -136,65 +169,9 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
             return None
         return datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)
 
-    @property
-    def available(self) -> Optional[bool]:
-        return self._available
-
-    @property
-    def temperature(self) -> Optional[float]:
-        """Return the current temperature in degrees C."""
-        if DatapointAttribute.TEMPERATURE not in self._datapoint:
-            return None
-        return self._datapoint[DatapointAttribute.TEMPERATURE]
-
-    @property
-    def humidity(self) -> Optional[float]:
-        """Return the current relative humidity percentage."""
-        if DatapointAttribute.HUMIDITY not in self._datapoint:
-            return None
-        return self._datapoint[DatapointAttribute.HUMIDITY]
-
-    @property
-    def co2(self) -> Optional[float]:
-        """Return the current co2."""
-        if DatapointAttribute.CO2 not in self._datapoint:
-            return None
-        return self._datapoint[DatapointAttribute.CO2]
-
-    @property
-    def voc(self) -> Optional[float]:
-        """Return the current voc."""
-        if DatapointAttribute.VOC not in self._datapoint:
-            return None
-        return self._datapoint[DatapointAttribute.VOC]
-
-    @property
-    def pm1(self) -> Optional[float]:
-        """Return the current pm1."""
-        if DatapointAttribute.PM1 not in self._datapoint:
-            return None
-        return self._datapoint[DatapointAttribute.PM1]
-
-    @property
-    def pm10(self) -> Optional[float]:
-        """Return the current pm10."""
-        if DatapointAttribute.PM10 not in self._datapoint:
-            return None
-        return self._datapoint[DatapointAttribute.PM10]
-
-    @property
-    def pm25(self) -> Optional[float]:
-        """Return the current pm25."""
-        if DatapointAttribute.PM25 not in self._datapoint:
-            return None
-        return self._datapoint[DatapointAttribute.PM25]
-
-    @property
-    def all_pollution(self) -> Optional[float]:
-        """Return all pollution"""
-        if DatapointAttribute.ALL_POLLUTION not in self._datapoint:
-            return None
-        return self._datapoint[DatapointAttribute.ALL_POLLUTION]
+    # @property
+    # def available(self) -> Optional[bool]:
+    #     return self._available
 
     @property
     def fan_speed(self) -> Optional[int]:
@@ -279,6 +256,12 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
         self._attribute[ConfigAttribute.BRIGHTNESS] = next_device_brightness
         await self.async_refresh()
 
+    def _get_last_seen(self) -> Optional[datetime]:
+        timestamp = self._datapoint.get(DatapointAttribute.TIMESTAMP)
+        if timestamp is None:
+            return None
+        return datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)
+
     async def _update_device(self, *_) -> None:
         """Update the device information from the API."""
         LOGGER.info(self._name)
@@ -298,6 +281,7 @@ class BlueairDataUpdateCoordinator(DataUpdateCoordinator):
             lambda: self.api_client.get_attributes(self._uuid)
         )
         LOGGER.info(f"_attribute: {self._attribute}")
+
         self._available = self._check_if_device_is_available()
 
     def _check_if_device_is_available(self) -> Optional[bool]:
